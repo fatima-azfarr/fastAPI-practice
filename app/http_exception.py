@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException,status
 from scalar_fastapi import get_scalar_api_reference
 
+
 app = FastAPI()
 
 shipments = {
@@ -48,7 +49,7 @@ def get_shipment(id : int | None = None) -> dict[str,Any]:
     else:
         return shipments[id]
 
-@app.get("/scalar")
+@app.get("/scalar",include_in_schema=False)
 def get_scalar_doc():
     return get_scalar_api_reference(
         openapi_url=app.openapi_url,

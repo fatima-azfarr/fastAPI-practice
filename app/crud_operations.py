@@ -49,16 +49,17 @@ def get_shipment(id : int | None = None) -> dict[str,Any]:
 
 # POST METHOD
 # to get data from the client to the server
-
 @app.post("/shipment")
 def submit_shipment(content: str,weight: float) -> dict[str,int]:
 
+    # validate the weight
     if weight > 25 :
         raise HTTPException(
             status_code = status.HTTP_406_NOT_ACCEPTABLE,
             detail = "Invalid Request, the weight exceeds the given limit (i.e 25 kgs)"
         )
     
+    # create and assign shipment a new id
     new_id = max(shipments.keys()) + 1
 
     shipments[new_id] = {
@@ -66,7 +67,15 @@ def submit_shipment(content: str,weight: float) -> dict[str,int]:
         "weight" : weight
     }
     return {"id": new_id}
+
+
     
+# PUT METHOD
+@app.put("/shipment")
+def put_shipment():
+    pass
+
+
 
 
 @app.get("/scalar",include_in_schema=False)

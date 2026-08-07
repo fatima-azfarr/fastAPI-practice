@@ -29,6 +29,8 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
 
     else:
         return shipments[id]
+    
+    
 
 
 # POST METHOD - (create or get new data from client to server)
@@ -55,8 +57,10 @@ def submit_shipment(
     return {"id": new_id}
 
 
+
+
 # PUT METHOD - (updates all the existing data)
-@app.put("/shipment")
+@app.put("/shipment/{id}")
 def update_shipment(
     id: int, content: str, weight: float, shipment_status: str
 ) -> dict[str, Any]:
@@ -67,6 +71,7 @@ def update_shipment(
         "status": shipment_status,
     }
     return shipments[id]
+
 
 
 # PATCH METHOD - (updates certain fields of existing data)
@@ -100,6 +105,8 @@ def patch_shipment(
     shipments[id] = shipment
     return shipment
 
+
+
 #DELETE METHOD - (deletes the existing data)
 @app.delete("/shipment")
 def delete_shipment(id:int)-> dict[str,Any]:
@@ -110,12 +117,7 @@ def delete_shipment(id:int)-> dict[str,Any]:
         )
     
     deleted_shipment = shipments.pop(id)
-    return deleted_shipment
-# or you can just return {"detail" : f"the shipment with id#{id} is deleted!"}
-
-
-    
-     
+    return deleted_shipment # or you can just return {"detail" : f"the shipment with id#{id} is deleted!"}
 
 
 

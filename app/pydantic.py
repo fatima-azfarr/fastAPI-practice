@@ -8,17 +8,17 @@ from .schema import Shipment, ShipmentStatus, ShipmentStatusUpdate
 app = FastAPI()
 
 
-shipments = {
-    12345: {"content": "wooden box", "weight": 20, "status": "in transit"},
-    12346: {"content": "glassware", "weight": 10, "status": "placed"},
-    12347: {"content": "mobile phones", "weight": 50, "status": "placed"},
-    12348: {"content": "keyboard", "weight": 10, "status": "cancelled"},
+shipments: dict[int, Shipment] = {
+    12345: Shipment(content="wooden box", weight=20, status="in transit"),
+    12346: Shipment(content="glassware", weight=10, status="placed"),
+    12347: Shipment(content="mobile phones", weight=23, status="placed"),
+    12348: Shipment(content="keyboard", weight=10, status="cancelled"),
 }
 
 
 # GET METHOD
 @app.get("/shipment")
-def get_shipment(id: int | None = None) -> dict[str, Any]:
+def get_shipment(id: int |None = None) -> Shipment:
     if id is None:
         id = max(shipments.keys())
         return shipments[id]
@@ -28,7 +28,11 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, given id doesn't exist!",
         )
+
     return shipments[id]
+    
+       
+    
 
 
 # POST METHOD
@@ -36,20 +40,20 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
 def submit_shipments(body: Shipment) -> dict[str, Any]:
 
     new_id = max(shipments.keys()) + 1
-    shipments[new_id] = body.model_dump()
+    shipments[new_id] = body
     return {"id": new_id}
 
 
 # PUT METHOD
 @app.put("/shipment/{id}")
-def update_shipment(id: int, body: Shipment) -> dict[str, Any]:
+def update_shipment(id: int, body: Shipment) -> Shipment:
     if id not in shipments:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, the given id doesn't exist!",
         )
 
-    shipments[id] = body.model_dump()
+    shipments[id] = body
     return shipments[id]
 
 
@@ -57,14 +61,14 @@ def update_shipment(id: int, body: Shipment) -> dict[str, Any]:
 # PATCH METHOD
 # used body:dict[str,Any] to understand enums
 @app.patch("/shipment")
-def patch_shipment(id: int, body: ShipmentStatusUpdate) -> dict[str, Any]:
+def patch_shipment(id: int, body: ShipmentStatusUpdate) -> Shipment :
     if id not in shipments:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, the given id doesn't exist!",
         )
     # updating data with given fields
-    shipments[id]["status"] = body.status
+    shipments[id].status = body.status
     return shipments[id]
 
 

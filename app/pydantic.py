@@ -1,9 +1,9 @@
 from typing import Any
 
-from .schema import Shipment
 from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
 
+from .schema import Shipment, ShipmentStatus, ShipmentStatusUpdate
 
 app = FastAPI()
 
@@ -34,11 +34,10 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
 # POST METHOD
 @app.post("/shipment")
 def submit_shipments(body: Shipment) -> dict[str, Any]:
-    
+
     new_id = max(shipments.keys()) + 1
     shipments[new_id] = body.model_dump()
     return {"id": new_id}
-
 
 
 # PUT METHOD
@@ -54,25 +53,20 @@ def update_shipment(id: int, body: Shipment) -> dict[str, Any]:
     return shipments[id]
 
 
+
 # PATCH METHOD
-@app.patch("/shipment/{id}")
-def patch_shipment(id: int, body: Shipment) -> dict[str, Any]:
+# used body:dict[str,Any] to understand enums
+@app.patch("/shipment")
+def patch_shipment(id: int, body: ShipmentStatusUpdate) -> dict[str, Any]:
     if id not in shipments:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, the given id doesn't exist!",
         )
-
-    shipment = shipments[id]
-    if body.content is not None:
-        shipment["content"] = body.content
-    if body.weight is not None:
-        shipment["weight"] = body.weight
-    if body.status is not None:
-        shipment["status"] = body.status
-
-    shipments[id] = shipment
+    # updating data with given fields
+    shipments[id]["status"] = body.status
     return shipments[id]
+
 
 
 # DELETE METHOD

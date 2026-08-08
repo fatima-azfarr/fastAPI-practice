@@ -1,17 +1,11 @@
 from typing import Any
 
+from .schema import Shipment
 from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
-from pydantic import BaseModel
+
 
 app = FastAPI()
-
-
-class Shipment(BaseModel):
-    content: str
-    weight: float
-    status: str
-    destination: str
 
 
 shipments = {
@@ -40,15 +34,11 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
 # POST METHOD
 @app.post("/shipment")
 def submit_shipments(body: Shipment) -> dict[str, Any]:
-    if body.weight > 25:
-        raise HTTPException(
-            status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            detail="Invalid request, weight isn't under the designated limit (i.e 25 kgs)",
-        )
-
+    
     new_id = max(shipments.keys()) + 1
     shipments[new_id] = body.model_dump()
     return {"id": new_id}
+
 
 
 # PUT METHOD

@@ -3,22 +3,28 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
 
-from .schema import Shipment, ShipmentStatus, ShipmentStatusUpdate
+from .schema import (
+    ShipmentCreate,
+    ShipmentRead,
+    ShipmentStatus,
+    ShipmentStatusUpdate,
+    ShipmentUpdate,
+)
 
 app = FastAPI()
 
 
-shipments: dict[int, Shipment] = {
-    12345: Shipment(content="wooden box", weight=20, status="in transit"),
-    12346: Shipment(content="glassware", weight=10, status="placed"),
-    12347: Shipment(content="mobile phones", weight=23, status="placed"),
-    12348: Shipment(content="keyboard", weight=10, status="cancelled"),
+shipments: dict[int, ShipmentRead] = {
+    12345: ShipmentRead(content="wooden box", weight=20, destination="Lahore", status=ShipmentStatus.in_transit),
+    12346: ShipmentRead(content="glassware", weight=10, destination="Karachi", status=ShipmentStatus.placed),
+    12347: ShipmentRead(content="mobile phones", weight=23, destination="Islamabad", status=ShipmentStatus.placed),
+    12348: ShipmentRead(content="keyboard", weight=10, destination="Multan", status=ShipmentStatus.cancelled),
 }
 
 
 # GET METHOD
-@app.get("/shipment")
-def get_shipment(id: int |None = None) -> Shipment:
+@app.get("/shipment", response_model=ShipmentRead)
+def get_shipment(id: int | None = None) -> ShipmentRead:
     if id is None:
         id = max(shipments.keys())
         return shipments[id]
@@ -28,49 +34,40 @@ def get_shipment(id: int |None = None) -> Shipment:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, given id doesn't exist!",
         )
-
     return shipments[id]
-    
-       
-    
 
 
 # POST METHOD
-@app.post("/shipment")
-def submit_shipments(body: Shipment) -> dict[str, Any]:
-
+@app.post("/shipment", response_model=ShipmentRead)
+def submit_shipments(body: ShipmentCreate) -> ShipmentRead:
     new_id = max(shipments.keys()) + 1
-    shipments[new_id] = body
-    return {"id": new_id}
+    new_shipment = ShipmentRead(**body.model_dump(), status=ShipmentStatus.placed)
+    shipments[new_id] = new_shipment
+    return new_shipment
 
 
 # PUT METHOD
-@app.put("/shipment/{id}")
-def update_shipment(id: int, body: Shipment) -> Shipment:
+@app.put("/shipment/{id}", response_model=ShipmentRead)
+def update_shipment(id: int, body: ShipmentUpdate) -> ShipmentRead:
     if id not in shipments:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, the given id doesn't exist!",
         )
-
-    shipments[id] = body
+    shipments[id] = ShipmentRead(**body.model_dump())
     return shipments[id]
-
 
 
 # PATCH METHOD
-# used body:dict[str,Any] to understand enums
-@app.patch("/shipment")
-def patch_shipment(id: int, body: ShipmentStatusUpdate) -> Shipment :
+@app.patch("/shipment", response_model=ShipmentRead)
+def patch_shipment(id: int, body: ShipmentStatusUpdate) -> ShipmentRead:
     if id not in shipments:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid request, the given id doesn't exist!",
         )
-    # updating data with given fields
     shipments[id].status = body.status
     return shipments[id]
-
 
 
 # DELETE METHOD
@@ -85,7 +82,6 @@ def delete_shipment(id: int) -> dict[str, Any]:
     return {"detail": f"The shipment #{id} is deleted", "shipment": deleted_shipment}
 
 
-# SCALAR API Documentation
 @app.get("/scalar", include_in_schema=False)
 def scalar_documentation():
     return get_scalar_api_reference(openapi_url=app.openapi_url, title="scalar API")

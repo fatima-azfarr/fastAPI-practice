@@ -8,8 +8,7 @@ went through several rounds of refactoring (raw dicts → Pydantic models →
 enums → response models), and separately on smaller standalone files for
 type hints, path params, and query params.
 
-A second project, [bookshelf-tracker](../bookshelf-tracker), applies these
-same concepts to something built from scratch, including a real frontend —
+A second project, [bookshelf-tracker](https://github.com/fatima-azfarr/bookshelf-tracker), applies these same concepts to something built from scratch, including a real frontend —
 worth checking there for how the patterns hold up outside the course's
 own example.
 

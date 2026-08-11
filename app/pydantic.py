@@ -41,6 +41,7 @@ def get_shipment(id: int | None = None) -> ShipmentRead:
 @app.post("/shipment", response_model=ShipmentRead)
 def submit_shipments(body: ShipmentCreate) -> ShipmentRead:
     new_id = max(shipments.keys()) + 1
+    # here new_shipment basically contains the pydantic object
     new_shipment = ShipmentRead(**body.model_dump(), status=ShipmentStatus.placed)
     shipments[new_id] = new_shipment
     return new_shipment

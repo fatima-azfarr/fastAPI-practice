@@ -9,6 +9,7 @@ if FILE_PATH.exists() and FILE_PATH.stat().st_size > 0:
     with open(FILE_PATH, "r") as f:
         data = json.load(f)
 
+        # map as a dictionary
         for value in data:
             shipments[value["id"]] = value
 

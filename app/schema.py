@@ -20,6 +20,7 @@ class BaseShipment(BaseModel):
 
 # what the server stores internally and returns in every response
 class ShipmentRead(BaseShipment):
+    id : int
     status: ShipmentStatus
 
 # what a client sends to POST (no status — server sets it to placed)

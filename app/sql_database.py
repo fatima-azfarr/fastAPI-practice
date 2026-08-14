@@ -1,65 +1,48 @@
 import sqlite3
 from typing import Any
 
-from app.schema import ShipmentCreate, ShipmentRead, ShipmentUpdate
+from app.schema import ShipmentCreate, ShipmentStatusUpdate, ShipmentUpdate
 
 
+# run database on different thread
 class Database:
     def __init__(self):
-        # Make connection with the database
-        self.conn = sqlite3.connect("sqlite.db")
-
-        # Create a cursor to execute SQL queries
+        self.conn = sqlite3.connect("sqlite.db", check_same_thread=False)
         self.cur = self.conn.cursor()
-
-        # Create the table if it doesn't exist
         self.create_table()
 
-    # 1. Create a table
     def create_table(self):
         self.cur.execute("""
             CREATE TABLE IF NOT EXISTS shipments (
                 id INTEGER PRIMARY KEY,
                 content TEXT,
                 weight REAL,
+                destination TEXT,
                 status TEXT
             )
         """)
         self.conn.commit()
 
-    # 2. Save shipment data
+    # CREATE
     def create(self, body: ShipmentCreate) -> int:
-
-        # Find the highest ID
-        self.cur.execute("SELECT MAX(id) FROM shipments")
-
-        result = self.cur.fetchone()
-
-        # If there are no shipments, start at 1
-        new_id = (result[0] or 0) + 1
-
-        # Add data to shipments
         self.cur.execute("""
-            INSERT INTO shipments (id, content, weight, status)
-            VALUES (:id, :content, :weight, :status)
+            INSERT INTO shipments (content, weight, destination, status)
+            VALUES (:content, :weight, :destination, :status)
         """, {
-            "id": new_id,
             "content": body.content,
             "weight": body.weight,
+            "destination": body.destination,
             "status": "placed"
         })
 
-        # Commit the changes
         self.conn.commit()
 
-        return new_id
+        return self.cur.lastrowid
 
-    # 3. Read data from shipments
+    # GET
     def get(self, id: int) -> dict[str, Any] | None:
-
         self.cur.execute("""
-            SELECT id, content, weight, status
-            FROM shipments
+            SELECT * FROM shipments
             WHERE id = ?
         """, (id,))
 
@@ -72,28 +55,38 @@ class Database:
             "id": row[0],
             "content": row[1],
             "weight": row[2],
-            "status": row[3]
+            "destination": row[3],
+            "status": row[4]
         }
 
-    # 4. Update a shipment
-    def update(self, id:int, shipment: ShipmentUpdate) -> dict[str, Any] | None:
-
+    # PATCH (status only)
+    def patch(self, id: int, shipment: ShipmentStatusUpdate) -> dict[str, Any] | None:
         self.cur.execute("""
             UPDATE shipments
-            SET content = :content, weight = :weight, status = :status
-            WHERE id = ?
+            SET status = :status
+            WHERE id = :id
         """, {
-            "id" : id,
-            **shipment.model_dump(),
-            }
-        )
+            "id": id,
+            **shipment.model_dump()
+        })
         self.conn.commit()
-
         return self.get(id)
 
-    # 5. Delete a shipment
-    def delete(self, id: int) -> None:
+    # UPDATE (full replace)
+    def update(self, id: int, shipment: ShipmentUpdate) -> dict[str, Any] | None:
+        self.cur.execute("""
+            UPDATE shipments
+            SET content = :content, weight = :weight, destination = :destination, status = :status
+            WHERE id = :id
+        """, {
+            "id": id,
+            **shipment.model_dump()
+        })
+        self.conn.commit()
+        return self.get(id)
 
+    # DELETE
+    def delete(self, id: int) -> None:
         self.cur.execute("""
             DELETE FROM shipments
             WHERE id = ?
@@ -101,6 +94,5 @@ class Database:
 
         self.conn.commit()
 
-    # Close connection
     def close(self):
         self.conn.close()

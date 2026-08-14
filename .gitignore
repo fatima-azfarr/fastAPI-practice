@@ -3,3 +3,5 @@ __pycache__/
 .mypy_cache/
 *.pyc
 .DS_Store
+sqlite.db
+*.db

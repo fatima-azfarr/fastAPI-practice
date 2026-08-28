@@ -1,24 +1,34 @@
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
+from sqlmodel import Session
 
+from app.database.session import create_db_table
+
+from .database.sql_database import Database
 from .schema import (
     ShipmentCreate,
     ShipmentRead,
     ShipmentStatusUpdate,
     ShipmentUpdate,
 )
-from .sql_database import Database
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan_handler(app:FastAPI):
+    create_db_table()
+    yield
+
+app = FastAPI(lifespan=lifespan_handler)
 
 db = Database()
 
 
 # GET METHOD
 @app.get("/shipment/{id}", response_model=ShipmentRead)
-def get_shipment(id: int) -> ShipmentRead:
+def get_shipment(id: int,session:Session = Depends) -> ShipmentRead:
     shipment = db.get(id)
 
     if shipment is None:
@@ -27,7 +37,7 @@ def get_shipment(id: int) -> ShipmentRead:
             detail="Invalid request, given id doesn't exist!",
         )
 
-    return shipment
+    return ShipmentRead(**shipment)
 
 
 # POST METHOD

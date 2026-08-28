@@ -51,8 +51,8 @@ def update_shipment(id:int,body:ShipmentUpdate)->ShipmentRead:
             detail= f"Invalid request, the given id #{id} doesn't exits!"
             )
     shipments[id] = {
+        "id" : id,
         **body.model_dump(),
-        "id" : id
     }
     save()
     return shipments[id]

@@ -1,14 +1,6 @@
-from enum import Enum
-
 from pydantic import BaseModel, Field
 
-
-class ShipmentStatus(str, Enum):
-    placed = "placed"
-    in_transit = "in transit"
-    out_for_delivery = "out for delivery"
-    delivered = "delivered"
-    cancelled = "cancelled"
+from app.database.models import ShipmentStatus
 
 # to get better understanding of response models
 # they’re structures that define what shape the system’s output should have

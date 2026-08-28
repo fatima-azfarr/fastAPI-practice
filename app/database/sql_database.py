@@ -1,4 +1,6 @@
 import sqlite3
+from contextlib import contextmanager
+from pathlib import Path
 from typing import Any
 
 from app.schema import ShipmentCreate, ShipmentStatusUpdate, ShipmentUpdate
@@ -6,10 +8,15 @@ from app.schema import ShipmentCreate, ShipmentStatusUpdate, ShipmentUpdate
 
 # run database on different thread
 class Database:
-    def __init__(self):
-        self.conn = sqlite3.connect("sqlite.db", check_same_thread=False)
+   
+    def connect_to_db(self):
+        # make connection to the database
+        print("Connected to sqlite.db...")
+        DB_PATH = Path(__file__).parent / "sqlite.db"
+        self.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+
+        # get cursor to execute the queries
         self.cur = self.conn.cursor()
-        self.create_table()
 
     def create_table(self):
         self.cur.execute("""
@@ -95,4 +102,58 @@ class Database:
         self.conn.commit()
 
     def close(self):
+        print("....closing connection.")
         self.conn.close()
+
+
+    # when we enter the context i.e database, we have to go ahead and create the connection.
+    '''def __enter__(self):
+        # create the connection
+        print("Enter the context.")
+        self.connect_to_db()
+        # create table if already not there
+        self.create_table()
+        return self # thats the database instance
+
+    # when we exit the context i.e database, we close the connection
+    def __exit__(self, *arg):
+        print("Exiting the context.")
+        #disposal of the state
+        self.close()'''
+
+    
+# if we import from another pakage/module - we use function approach
+@contextmanager
+def managed_db():
+
+    #initialise
+    db = Database()
+
+    # setup
+    print("Enter the setup....")
+    db.connect_to_db()
+    db.create_table()
+
+    # generator function
+    yield db
+    print("....Exiting the context")
+
+    #disposal
+    db.close()
+
+
+# initialized, make a connection to the database, perform the actions and then close it as well.
+# Context manager - does this automatically where database is the context and manager deals with opening and closing of the connection
+    
+#context manager - 
+with managed_db() as db:
+    print(db.get(1))
+    print(db.get(2))
+
+
+
+
+
+
+    
+    
